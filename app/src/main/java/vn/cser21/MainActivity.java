@@ -14,6 +14,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,7 +40,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
@@ -86,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     //Upload Var
     private float m_downX;
     private static final int STORAGE_PERMISSION_CODE = 123;
+    private static final int LOCATION_PERMISSION_CODE = 231;
     private final static int FILECHOOSER_RESULTCODE = 1;
     private ValueCallback<Uri[]> mUploadMessage;
 
@@ -95,8 +100,17 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private ValueCallback<Uri[]> mUMA;
     private final static int FCR = 1;
     private Result resultQrCode;
+    private Result resultLocation;
+
+    private FusedLocationProviderClient fusedLocationClient;
 
     // End Upload Var
+
+    public void showRequestPermissionLocation(Result result, String[] perms) {
+        resultLocation = result.copy();
+        EasyPermissions.requestPermissions(this, "Vui lòng cấp quyền location ! ",
+                LOCATION_PERMISSION_CODE, perms);
+    }
 
     public void showQrCodeScreen(Result result) {
         resultQrCode = result.copy();
@@ -341,9 +355,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //go
         super.onCreate(savedInstanceState);
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().setStatusBarColor(Color.BLUE);
+
 
         if (!isTaskRoot() && (getIntent().hasCategory(Intent.CATEGORY_LAUNCHER) || getIntent().hasCategory(Intent.CATEGORY_INFO))
                 && Intent.ACTION_MAIN.equals(getIntent().getAction())) {
@@ -455,13 +472,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         html = html.replace("<body>", "<body><script> var ANDROID_EXTRAS =" + jsonExtras + "; document.documentElement.style.setProperty('--f7-safe-area-top', '" + getStatusBarHeight() + "px'); document.documentElement.style.setProperty('--f7-safe-area-bottom', '" + getNavigationBarHeight() + "px')</script>");
 
         //DEV Remove
-        //wv.loadDataWithBaseURL(domain, html + "", "text/html", "utf-8", "");
+        wv.loadDataWithBaseURL(domain, html + "", "text/html", "utf-8", "");
         //DEV Remove
 
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
-        wv.loadUrl("https://cser.vn/app-chamcong");
-        wv.setVisibility(View.VISIBLE);
+
+        //wv.loadUrl("https://e588-42-114-127-23.ngrok-free.app");
+        //wv.setVisibility(View.VISIBLE);
 
         //DEV Open
 
@@ -634,6 +652,34 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     }
 
+    public class CurrentLocation {
+        public double longitude;
+        public double latitude;
+
+        public CurrentLocation(double longitude, double latitude) {
+            this.longitude = longitude;
+            this.latitude = latitude;
+        }
+    }
+
+
+    @SuppressLint("MissingPermission")
+    public void getCurrentLocation(Result result) {
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, location -> {
+                    // Got last known location. In some rare situations this can be null.
+                    if (location != null) {
+                        result.success = true;
+                        result.data = new CurrentLocation(location.getLongitude(), location.getLatitude());
+                    } else {
+                        result.data = "";
+                        result.success = false;
+                        result.error = "Vui lòng bật định vị";
+                    }
+                    app21.App21Result(result);
+                });
+    }
+
     public void openFileExplorer() {
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
@@ -749,24 +795,28 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @Override
     public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
         if (requestCode == 202) return;
-        QRCodeFragment qrCodeFragment = QRCodeFragment.newInstance(new QRCodeFragment.QRCodeResult() {
-            @Override
-            public void onQRCode(String code) {
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        resultQrCode.success = true;
-                        resultQrCode.data = code;
-                        app21.App21Result(resultQrCode);
-                    }
-                }.run();
-            }
-        });
+        else if (requestCode == LOCATION_PERMISSION_CODE) {
+            getCurrentLocation(resultLocation);
+        } else {
+            QRCodeFragment qrCodeFragment = QRCodeFragment.newInstance(new QRCodeFragment.QRCodeResult() {
+                @Override
+                public void onQRCode(String code) {
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            resultQrCode.success = true;
+                            resultQrCode.data = code;
+                            app21.App21Result(resultQrCode);
+                        }
+                    }.run();
+                }
+            });
 
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.add(R.id.layout, qrCodeFragment)
-                .addToBackStack("QRCodeFragment")
-                .commit();
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            ft.add(R.id.layout, qrCodeFragment)
+                    .addToBackStack("QRCodeFragment")
+                    .commit();
+        }
     }
 
     @Override

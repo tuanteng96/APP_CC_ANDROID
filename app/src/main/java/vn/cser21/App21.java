@@ -21,21 +21,26 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.app.Activity;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.core.content.FileProvider;
+
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
+
 import com.google.gson.Gson;
 import com.permissionx.guolindev.PermissionX;
 import com.permissionx.guolindev.callback.RequestCallback;
+
 import android.view.WindowManager;
+
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -84,7 +89,7 @@ public class App21 {
             String script = "App21Result('" + s + "')";
             // wv.evaluateJavascript(script, null);
 
-           MainActivity m = (MainActivity) mContext;
+            MainActivity m = (MainActivity) mContext;
             m.evalJs(script);
 
 
@@ -259,13 +264,20 @@ public class App21 {
         m.setBackground(rs.params);
     }
 
-    void STATUS_BAR_COLOR (final Result result) {
+    void STATUS_BAR_COLOR(final Result result) {
         Result rs = result.copy();
         rs.success = true;
-        Log.e("Param",rs.params);
+        Log.e("Param", rs.params);
 
         MainActivity m = (MainActivity) mContext;
         m.changeStatusBarColor(rs.params);
+    }
+
+    void ON_PAGE_INIT(final Result result) {
+        Result rs = result.copy();
+        rs.success = true;
+        rs.data = rs.params;
+        App21Result(rs);
     }
 
     void SET_BADGE(final Result result) {
@@ -277,9 +289,16 @@ public class App21 {
     }
 
     void GET_LOCATION(final Result result) {
-        Result rs = result.copy();
-        rs.success = true;
-        App21Result(rs);
+        if (mContext instanceof MainActivity) {
+            String[] perms = {Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            };
+            if (EasyPermissions.hasPermissions(((MainActivity) mContext).getActivity(), perms)) {
+                ((MainActivity) mContext).getCurrentLocation(result);
+            } else {
+                ((MainActivity) mContext).showRequestPermissionLocation(result, perms);
+            }
+        }
     }
 
     void OPEN_QRCODE(final Result result) {
@@ -301,7 +320,7 @@ public class App21 {
                     }
                 });
                 FragmentTransaction ft = ((MainActivity) mContext).getSupportFragmentManager().beginTransaction();
-                ft.add(R.id.layout, qrCodeFragment )
+                ft.add(R.id.layout, qrCodeFragment)
                         .addToBackStack("QRCodeFragment")
                         .commit();
             } else {
@@ -312,7 +331,7 @@ public class App21 {
 
     //TuanDev Finish App
     void FINISH_ACTIVITY(final Result result) {
-        ((Activity)mContext).finish();
+        ((Activity) mContext).finish();
     }
 
     void BASE64(final Result result) {
@@ -1047,25 +1066,23 @@ public class App21 {
             try {
                 JSONObject jObject = new JSONObject(result.params);
 
-                String  key = jObject.has("key") ? jObject.getString("key") : null;
-                String  value = jObject.has("value") ? jObject.getString("value") : null ;
-                if(key!=null && !key.isEmpty())
-                {
-                    if(value!=null)
-                    {
+                String key = jObject.has("key") ? jObject.getString("key") : null;
+                String value = jObject.has("value") ? jObject.getString("value") : null;
+                if (key != null && !key.isEmpty()) {
+                    if (value != null) {
 
                         SharedPreferences.Editor editor = sharedPref.edit();
                         editor.putString(key, value);
                         editor.commit();
                         result.data = value;
-                    }else{
+                    } else {
                         result.data = sharedPref.getString(key, null);
                     }
                     result.success = true;
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
-                result.error =  e.getMessage();
+                result.error = e.getMessage();
             }
 
 

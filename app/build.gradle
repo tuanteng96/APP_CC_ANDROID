@@ -4,11 +4,11 @@ apply plugin: 'kotlin-android'
 android {
     compileSdkVersion 33
     defaultConfig {
-        applicationId "vn.quanlywow"
+        applicationId "vn.ezsspa"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 4
-        versionName "4"
+        versionCode 1
+        versionName "1"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     buildTypes {
@@ -25,9 +25,9 @@ android {
 
     productFlavors {
         prod {
-            applicationId "vn.quanlywow"
-            versionCode 4
-            versionName "4"
+            applicationId "vn.ezsspa"
+            versionCode 1
+            versionName "1"
         }
     }
 
