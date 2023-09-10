@@ -359,6 +359,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+
         getWindow().setStatusBarColor(Color.BLUE);
 
 
@@ -478,7 +479,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
 
-        //wv.loadUrl("https://e588-42-114-127-23.ngrok-free.app");
+        //wv.loadUrl("https://0007-183-80-181-187.ngrok-free.app");
         //wv.setVisibility(View.VISIBLE);
 
         //DEV Open
@@ -697,7 +698,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     private void initWebView() {
         // Dev Hidden
-        //wv.setWebViewClient(new Callback());
+        wv.setWebViewClient(new Callback());
         // Dev Hidden
 
         // Dev Open
