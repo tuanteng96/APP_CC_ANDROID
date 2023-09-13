@@ -273,11 +273,13 @@ public class App21 {
         m.changeStatusBarColor(rs.params);
     }
 
-    void ON_PAGE_INIT(final Result result) {
+    void NAVIGATION_COLOR(final Result result) {
         Result rs = result.copy();
         rs.success = true;
-        rs.data = rs.params;
-        App21Result(rs);
+        Log.e("Param", rs.params);
+
+        MainActivity m = (MainActivity) mContext;
+        m.changeNavigationColor(rs.params);
     }
 
     void SET_BADGE(final Result result) {

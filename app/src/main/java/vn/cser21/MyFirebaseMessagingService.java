@@ -98,6 +98,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
     }
 
+    private PendingIntent createPendingIntent(Intent intent) {
+        PendingIntent pendingIntent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            pendingIntent = PendingIntent.getActivity(this,
+                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+        } else {
+            pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
+        return pendingIntent;
+    }
+
     public void sendNotification(Intent intentNoti) {
         if (intentNoti.getStringExtra("gcm.notification.body") == null) return;
 
@@ -112,7 +123,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         intent.putExtras(intentNoti.getExtras());
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = createPendingIntent(intent);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, "channel_id")
                 .setContentTitle(title)

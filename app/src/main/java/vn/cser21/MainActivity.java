@@ -23,6 +23,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -38,6 +39,9 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -205,6 +209,16 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     }
 
+    public void changeNavigationColor(String params) {
+        runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                getWindow().setNavigationBarColor(Color.parseColor(params));
+            }
+        });
+    }
+
     public void changeStatusBarColor(String params) {
         runOnUiThread(new Runnable() {
 
@@ -348,50 +362,26 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         return bitmap;
     }
 
-    private void transparentStatusAndNavigation() {
-        //make full transparent statusBar
-        if (Build.VERSION.SDK_INT >= 19 && Build.VERSION.SDK_INT < 21) {
-            setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-                    | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, true);
-        }
-        if (Build.VERSION.SDK_INT >= 19) {
-            getWindow().getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            );
-        }
-        if (Build.VERSION.SDK_INT >= 21) {
-            setWindowFlag(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
-                    | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, false);
-            getWindow().setStatusBarColor(Color.TRANSPARENT);
-            getWindow().setNavigationBarColor(Color.TRANSPARENT);
-        }
-    }
-
-    private void setWindowFlag(final int bits, boolean on) {
-        Window win = getWindow();
-        WindowManager.LayoutParams winParams = win.getAttributes();
-        if (on) {
-            winParams.flags |= bits;
-        } else {
-            winParams.flags &= ~bits;
-        }
-        win.setAttributes(winParams);
-    }
-
     @SuppressLint({"ClickableViewAccessibility", "WrongViewCast"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        //go
         super.onCreate(savedInstanceState);
-        //transparentStatusAndNavigation();
-        //changeStatusBarColor("dark");
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
-//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+//        getWindow().setFlags(
+//                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+//                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+//        );
+
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(ContextCompat.getColor(this, android.R.color.transparent));
+
+        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
 
 
         if (!isTaskRoot() && (getIntent().hasCategory(Intent.CATEGORY_LAUNCHER) || getIntent().hasCategory(Intent.CATEGORY_INFO))
@@ -431,14 +421,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //load
 
         wv = (WebView) this.findViewById(R.id.wv);
-
         ANDROID = new ANDROID(this);
         wv.setBackgroundColor(Color.TRANSPARENT);
         //Luôn để mầu trắng
         //setBackground(null);
 
         wv.addJavascriptInterface(ANDROID, "ANDROID");
-
 
         WebSettings setting = wv.getSettings();
         //enable all
@@ -511,7 +499,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
 
-        //wv.loadUrl("https://aaa4-42-114-171-38.ngrok-free.app");
+        //wv.loadUrl("https://a440-58-187-228-193.ngrok-free.app");
         //wv.setVisibility(View.VISIBLE);
 
         //DEV Open
@@ -730,17 +718,17 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     private void initWebView() {
         // Dev Hidden
-        wv.setWebViewClient(new Callback());
+        //wv.setWebViewClient(new Callback());
         // Dev Hidden
 
         // Dev Open
-//        wv.setWebViewClient(new WebViewClient() {
-//
-//            public void onPageFinished(WebView view, String url) {
-//                wv.evaluateJavascript("javascript:document.documentElement.style.setProperty('--f7-safe-area-top', '"+ getStatusBarHeight() +"px');", null);
-//                wv.evaluateJavascript("javascript:document.documentElement.style.setProperty('--f7-safe-area-bottom', '"+ getNavigationBarHeight() +"px');", null);
-//            }
-//        });
+        wv.setWebViewClient(new WebViewClient() {
+
+            public void onPageFinished(WebView view, String url) {
+                wv.evaluateJavascript("javascript:document.documentElement.style.setProperty('--f7-safe-area-top', '"+ getStatusBarHeight() +"px');", null);
+                wv.evaluateJavascript("javascript:document.documentElement.style.setProperty('--f7-safe-area-bottom', '"+ getNavigationBarHeight() +"px');", null);
+            }
+        });
 
         // Dev Open
 
