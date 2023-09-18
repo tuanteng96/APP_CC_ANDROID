@@ -108,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     private FusedLocationProviderClient fusedLocationClient;
 
+    private int resultKeyboardHeight;
+
     // End Upload Var
 
     public void showRequestPermissionLocation(Result result, String[] perms) {
@@ -371,17 +373,33 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-//        getWindow().setFlags(
-//                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-//                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-//        );
-
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setStatusBarColor(ContextCompat.getColor(this, android.R.color.transparent));
 
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+
+//        findViewById(R.id.layout).getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//            @Override
+//            public void onGlobalLayout() {
+//                Rect rect = new Rect();
+//                findViewById(R.id.layout).getWindowVisibleDisplayFrame(rect);
+//                int screenHeight = findViewById(R.id.layout).getHeight();
+//                int keypadHeight = screenHeight - rect.bottom;
+//
+//                if (keypadHeight > screenHeight * 0.15) {
+//                    // Bàn phím hiển thị
+//                    //isKeyboardVisible = true;
+//                    resultKeyboardHeight = keypadHeight;
+//                    // Sử dụng keyboardHeight để lấy chiều cao của bàn phím
+//                } else {
+//                    // Bàn phím ẩn đi
+//                    //isKeyboardVisible = false;
+//                }
+//            }
+//        });
+
 
 
         if (!isTaskRoot() && (getIntent().hasCategory(Intent.CATEGORY_LAUNCHER) || getIntent().hasCategory(Intent.CATEGORY_INFO))
@@ -398,7 +416,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         setContentView(R.layout.activity_main);
 
         // Get Token Key
-
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
@@ -493,14 +510,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         html = html.replace("<body>", "<body><script> var ANDROID_EXTRAS =" + jsonExtras + "; document.documentElement.style.setProperty('--f7-safe-area-top', '" + getStatusBarHeight() + "px'); document.documentElement.style.setProperty('--f7-safe-area-bottom', '" + getNavigationBarHeight() + "px')</script>");
 
         //DEV Remove
-        wv.loadDataWithBaseURL(domain, html + "", "text/html", "utf-8", "");
+        //wv.loadDataWithBaseURL(domain, html + "", "text/html", "utf-8", "");
         //DEV Remove
 
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
 
-        //wv.loadUrl("https://a440-58-187-228-193.ngrok-free.app");
-        //wv.setVisibility(View.VISIBLE);
+        wv.loadUrl("https://276f-183-80-181-187.ngrok-free.app");
+        wv.setVisibility(View.VISIBLE);
 
         //DEV Open
 
@@ -521,13 +538,25 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if (intent.getStringExtra("NOTI_ID") != null && intent.getStringExtra("click_action") != null)
+        if (intent.getExtras().get("NOTI_ID") != null) {
+            Intent start = intent;
+            startActivity(start);
+            intent.replaceExtras(new Bundle());
+            intent.setAction("");
+            intent.setData(null);
+            finish();
+            return;
+        }
+        if (intent.getStringExtra("NOTI_ID") != null && intent.getStringExtra("click_action") != null) {
             if (!intent.getStringExtra("NOTI_ID").isEmpty() && !intent.getStringExtra("click_action").isEmpty()) {
                 Intent start = intent;
                 startActivity(start);
-                start = new Intent();
+                intent.replaceExtras(new Bundle());
+                intent.setAction("");
+                intent.setData(null);
                 finish();
             }
+        }
     }
 
     @Override
