@@ -303,6 +303,13 @@ public class App21 {
         }
     }
 
+    void GET_NETWORK_TYPE(final Result result) {
+        Result rs = result.copy();
+        rs.success = true;
+        rs.data = "NETWORK";
+        App21Result(rs);
+    }
+
     void OPEN_QRCODE(final Result result) {
         if (mContext instanceof MainActivity) {
             String[] perms = {Manifest.permission.CAMERA};

@@ -380,28 +380,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
 
-//        findViewById(R.id.layout).getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//            @Override
-//            public void onGlobalLayout() {
-//                Rect rect = new Rect();
-//                findViewById(R.id.layout).getWindowVisibleDisplayFrame(rect);
-//                int screenHeight = findViewById(R.id.layout).getHeight();
-//                int keypadHeight = screenHeight - rect.bottom;
-//
-//                if (keypadHeight > screenHeight * 0.15) {
-//                    // Bàn phím hiển thị
-//                    //isKeyboardVisible = true;
-//                    resultKeyboardHeight = keypadHeight;
-//                    // Sử dụng keyboardHeight để lấy chiều cao của bàn phím
-//                } else {
-//                    // Bàn phím ẩn đi
-//                    //isKeyboardVisible = false;
-//                }
-//            }
-//        });
-
-
-
         if (!isTaskRoot() && (getIntent().hasCategory(Intent.CATEGORY_LAUNCHER) || getIntent().hasCategory(Intent.CATEGORY_INFO))
                 && Intent.ACTION_MAIN.equals(getIntent().getAction())) {
             finish();
@@ -510,14 +488,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         html = html.replace("<body>", "<body><script> var ANDROID_EXTRAS =" + jsonExtras + "; document.documentElement.style.setProperty('--f7-safe-area-top', '" + getStatusBarHeight() + "px'); document.documentElement.style.setProperty('--f7-safe-area-bottom', '" + getNavigationBarHeight() + "px')</script>");
 
         //DEV Remove
-        //wv.loadDataWithBaseURL(domain, html + "", "text/html", "utf-8", "");
+        wv.loadDataWithBaseURL(domain, html + "", "text/html", "utf-8", "");
         //DEV Remove
 
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
 
-        wv.loadUrl("https://276f-183-80-181-187.ngrok-free.app");
-        wv.setVisibility(View.VISIBLE);
+//        wv.loadUrl("https://0ee4-42-118-50-82.ngrok-free.app");
+//        wv.setVisibility(View.VISIBLE);
 
         //DEV Open
 
