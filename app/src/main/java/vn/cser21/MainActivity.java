@@ -94,7 +94,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     //Upload Var
     private float m_downX;
     private static final int STORAGE_PERMISSION_CODE = 123;
-    private static final int LOCATION_PERMISSION_CODE = 231;
+     static final int LOCATION_PERMISSION_CODE = 231;
+     static final int WIFI_INFO_CODE = 333;
     private final static int FILECHOOSER_RESULTCODE = 1;
     private ValueCallback<Uri[]> mUploadMessage;
 
@@ -112,10 +113,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     // End Upload Var
 
-    public void showRequestPermissionLocation(Result result, String[] perms) {
+    public void showRequestPermissionLocation( Result result, String[] perms, int code) {
         resultLocation = result.copy();
         EasyPermissions.requestPermissions(this, "Vui lòng cấp quyền location ! ",
-                LOCATION_PERMISSION_CODE, perms);
+                code, perms);
     }
 
     public void showQrCodeScreen(Result result) {
@@ -639,19 +640,19 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     //Requesting permission upload
     private void requestStoragePermission() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             openFileExplorer();
             return;
         }
 
 
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             //If the user has denied the permission previously your code will come to this block
             //Here you can explain why you need this permission
             //Explain here why you need this permission
         }
         //And finally ask for the permission
-        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, STORAGE_PERMISSION_CODE);
     }
 
     @Override
@@ -708,6 +709,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 });
     }
 
+    public void getWiFiInfo(Result result) {
+        Map<String, Object> wifiInfo = WiFiManager.getWiFiInfo(getApplicationContext());
+        Result rs = result.copy();
+        rs.success = true;
+        rs.data = wifiInfo;
+        app21.App21Result(rs);
+    }
+
     public void openFileExplorer() {
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
@@ -717,9 +726,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
 
     public void requestCameraPermission() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.CAMERA, android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
         }
     }
 
@@ -772,7 +781,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             //For Android 5.0+
             public boolean onShowFileChooser(
                     WebView webView, ValueCallback<Uri[]> filePathCallback,
-                    WebChromeClient.FileChooserParams fileChooserParams) {
+                    FileChooserParams fileChooserParams) {
                 if (mUMA != null) {
                     mUMA.onReceiveValue(null);
                 }
@@ -820,11 +829,14 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
     }
 
+
     @Override
     public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
         if (requestCode == 202) return;
         else if (requestCode == LOCATION_PERMISSION_CODE) {
             getCurrentLocation(resultLocation);
+        } else if(requestCode == WIFI_INFO_CODE){
+            getWiFiInfo(resultLocation);
         } else {
             QRCodeFragment qrCodeFragment = QRCodeFragment.newInstance(new QRCodeFragment.QRCodeResult() {
                 @Override
@@ -849,7 +861,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     @Override
     public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
-
+        if(requestCode == WIFI_INFO_CODE){
+            Result rs = resultLocation.copy();
+            rs.success = true;
+            rs.data = "It looks like you've declined location permission. Please grant permission in App Settings to use this feature.";
+            app21.App21Result(rs);
+        }
     }
 
     public class Callback extends WebViewClient {

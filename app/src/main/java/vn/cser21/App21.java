@@ -26,6 +26,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.core.content.FileProvider;
 
@@ -208,6 +209,7 @@ public class App21 {
         return Base64.encodeToString(byteArray, Base64.URL_SAFE);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     Map<String, String> mapParams(String params) {
 
 
@@ -249,7 +251,7 @@ public class App21 {
             public void run() {
                 Intent intent = new Intent(mContext, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+                PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 AlarmManager mgr = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
                 mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, pendingIntent);
                 System.exit(0);
@@ -298,16 +300,27 @@ public class App21 {
             if (EasyPermissions.hasPermissions(((MainActivity) mContext).getActivity(), perms)) {
                 ((MainActivity) mContext).getCurrentLocation(result);
             } else {
-                ((MainActivity) mContext).showRequestPermissionLocation(result, perms);
+                ((MainActivity) mContext).showRequestPermissionLocation(result, perms,MainActivity.LOCATION_PERMISSION_CODE);
             }
         }
     }
 
     void GET_NETWORK_TYPE(final Result result) {
-        Result rs = result.copy();
-        rs.success = true;
-        rs.data = "NETWORK";
-        App21Result(rs);
+        if (mContext instanceof MainActivity) {
+            String[] perms = {Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            };
+            if (EasyPermissions.hasPermissions(((MainActivity) mContext).getActivity(), perms)) {
+                Map<String, Object> wifiInfo = WiFiManager.getWiFiInfo(mContext);
+                Result rs = result.copy();
+                rs.success = true;
+                rs.data = wifiInfo;
+                App21Result(rs);
+            } else {
+                ((MainActivity) mContext).showRequestPermissionLocation(result, perms, MainActivity.WIFI_INFO_CODE);
+            }
+        }
+
     }
 
     void OPEN_QRCODE(final Result result) {
@@ -388,6 +401,7 @@ public class App21 {
 
                             IsMe = true;
                             m.startActivityForResult(cInt, activityResultIDManager.put(new ActivityResultID() {
+                                @RequiresApi(api = Build.VERSION_CODES.N)
                                 @Override
                                 public void run() {
                                     if (this.resultCode == Activity.RESULT_OK) {
