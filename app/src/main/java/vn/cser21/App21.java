@@ -27,6 +27,7 @@ import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.core.content.FileProvider;
 
@@ -44,12 +45,15 @@ import android.view.WindowManager;
 
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -59,8 +63,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import pub.devrel.easypermissions.EasyPermissions;
+import pub.devrel.easypermissions.PermissionRequest;
 import vn.cser21.QRCodeFragment;
 
 
@@ -132,6 +138,9 @@ public class App21 {
             App21Result(rs);
         }
     }
+
+
+
 
     void _PERMISSION(final Result result, final String PermissionName, final Runnable granted) {
         final MainActivity m = (MainActivity) mContext;
@@ -607,6 +616,22 @@ public class App21 {
         Result rs = result.copy();
         rs.success = true;
         rs.data = "file OK";
+
+        App21Result(rs);
+    }
+
+    void CHOOSE_IMAGES(final Result result) {
+        Result rs = result.copy();
+        rs.success = true;
+        rs.data = "";
+
+        App21Result(rs);
+    }
+
+    void CHOOSE_FILES(final Result result) {
+        Result rs = result.copy();
+        rs.success = true;
+        rs.data = "";
 
         App21Result(rs);
     }
@@ -1126,6 +1151,232 @@ public class App21 {
         IsMe = false;
         return t; //true -> xuwr lys trong app21
     }
+
+    //23/09/2024
+    XPZ xpz = null;
+
+
+    String downForPrint(String url) throws Exception {
+
+        final String[] localPath = {null};
+        @SuppressLint("StaticFieldLeak")
+        DownloadFilesTask downloadFilesTask = new DownloadFilesTask() {
+            @Override
+            protected void onPostExecute(String _localPath) {
+                localPath[0] = _localPath;
+
+            }
+        };
+        downloadFilesTask.app21 = this;
+        downloadFilesTask.execute(url);
+
+        int timeOut = 0;
+        while (localPath[0] == null) {
+            if (timeOut > 5000) {
+
+                throw new Exception("download timeout:" + url);
+            }
+            timeOut += 50;
+            Thread.sleep(50);
+        }
+        return localPath[0];
+    }
+
+    void XPRINT(final Result result) {
+        final App21 t = this;
+
+
+        if (xpz == null) {
+            xpz = new XPZ();
+            xpz.setApp21(this);
+        }
+
+        String ipAddress = null;
+        XPZParam pr = null;
+        try {
+            JSONObject jObject = new JSONObject(result.params);
+            ipAddress = jObject.has("ipAddress") ? jObject.getString("ipAddress") : null;
+
+            JSONObject jParam = jObject.has("param") ? jObject.getJSONObject("param") : null;
+            List<XPZItem> items = new ArrayList<>();
+            if (jParam != null) {
+                org.json.JSONArray arr = jParam.getJSONArray("items");
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject jo = arr.getJSONObject(i);
+
+
+                    XPZItem item = new Gson().fromJson(jo.toString(), XPZItem.class);
+
+                    if (jo.has("table")) {
+                        JSONObject jtable = jo.getJSONObject("table");
+                        XPZTable tb = new Gson().fromJson(jtable.toString(), XPZTable.class);
+                        item.setTable(tb);
+                    }
+
+                    if (item != null) {
+                        items.add(item);
+
+                        if (item.getImageUrl() != null) {
+
+                            item.setImageLocalPath(downForPrint(item.getImageUrl()));
+                        }
+
+                        if (item.getPdfLink() != null) {
+                            String pdfLocal = downForPrint(item.getPdfLink());
+                            FileInputStream fis = mContext.openFileInput(pdfLocal);
+                            InputStreamReader isr = new InputStreamReader(fis);
+                            BufferedReader bufferedReader = new BufferedReader(isr);
+                            StringBuilder sb = new StringBuilder();
+                            String line;
+                            while ((line = bufferedReader.readLine()) != null) {
+                                sb.append(line);
+                            }
+                            item.setPdfString(sb.toString());
+                        }
+
+
+                    }
+                }
+            }
+
+
+            pr = jObject.has("param") ? new Gson().fromJson(result.params, XPZParam.class) : null;
+            if (ipAddress == null) throw new Exception("ipAddress is null");
+            if (pr == null) throw new Exception("param is null");
+
+
+            if (pr.getItems() == null) pr.setItems(items);
+            xpz.setResult(result);
+            xpz.printParam(ipAddress, pr);
+        } catch (Exception e) {
+            result.error = e.getMessage();
+
+            App21Result(result);
+        }
+    }
+
+    void  XPRINT_CLEAR(final Result result){
+        if (xpz == null) {
+            xpz = new XPZ();
+            xpz.setApp21(this);
+        }
+        xpz.clear();
+        result.success = true;
+        App21Result(result);
+
+    }
+
+    //01/10/2024
+    void STORE_TEXT(final Result result) {
+        final App21 t = this;
+        try {
+            JSONObject jObject = new JSONObject(result.params);
+            String name = jObject.has("name") ? jObject.getString("name") : null;
+
+            String fileName = "STORE_TEXT_" + name;
+
+            ContextWrapper cw = new ContextWrapper(mContext.getApplicationContext());
+            File directory = cw.getDir("profile", Context.MODE_PRIVATE);
+
+            File file = new File(directory, fileName);
+            if (!directory.exists()) {
+                directory.mkdir();
+            }
+
+            if (jObject.has("value")) {
+                //set
+                String value = jObject.getString("value");
+                FileWriter writer = new FileWriter(file);
+                writer.write(value);
+                writer.close();
+                result.data = "done";
+            } else {
+                //get
+                Scanner myReader = new Scanner(file);
+                StringBuilder data = new StringBuilder();
+                while (myReader.hasNextLine()) {
+                    data.append(data.length() == 0 ? "" : "\n").append(myReader.nextLine());
+                }
+                myReader.close();
+                result.data = data.toString();
+            }
+            result.success = true;
+
+        } catch (Exception e) {
+            result.success = false;
+            result.data = e.getMessage();
+        }
+        App21Result(result);
+    }
+
+    //04/10/2024
+    GetORCached goc = null;
+
+    void GET_OR_CACHED(final Result result) {
+        final App21 t = this;
+        try {
+            if (goc == null) goc = new GetORCached();
+
+            JSONObject jObject = new JSONObject(result.params);
+            String url = jObject.has("url") ? jObject.getString("url") : null;
+            int type = jObject.has("type") ? jObject.getInt("type") : 0;
+            int returnType = jObject.has("returnType") ? jObject.getInt("returnType") : 0;
+            if (url == null) throw new Exception("url is null");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                goc.handle(url, type, returnType, result, t);
+            } else {
+                throw new Exception("KHONG_HO_TRO");
+            }
+        } catch (Exception e) {
+            result.success = false;
+            result.error = e.getMessage();
+            App21Result(result);
+        }
+    }
+
+    String START_SCRIPT(final Result result) throws IOException {
+        final App21 t = this;
+
+        String name = "START_SCRIPT.js";
+        ContextWrapper cw = new  ContextWrapper(mContext.getApplicationContext());
+        File file = cw.getDir("profile", Context.MODE_PRIVATE);
+        if(!file.exists()){
+            file.mkdir();
+        }
+        file = new File(file.getPath() +"/" + name);
+        String js= "";
+        if (result != null) {
+            js = result.params;
+            try{
+
+                if(js==null) js="";
+                FileWriter writer = new FileWriter(file);
+                writer.write(js);
+                writer.close();
+                result.success = true;
+                result.data = "saved";
+                App21Result(result);
+            }catch (Exception e){
+                result.success = false;
+                result.data = e.getMessage();
+                App21Result(result);
+            }
+
+        }
+        if(file.exists())
+        {
+            Scanner myReader = new Scanner(file);
+            StringBuilder data = new StringBuilder();
+            while (myReader.hasNextLine()) {
+                data.append(data.length() == 0 ? "" : "\n").append(myReader.nextLine());
+            }
+            myReader.close();
+            js = data.toString();
+
+        }
+        return js;
+    }
+    //het 23/09/2024
 }
 
 class Async21 {

@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Map;
 
 import pub.devrel.easypermissions.EasyPermissions;
+import pub.devrel.easypermissions.PermissionRequest;
 import vn.cser21.incoming.CallNotEndEvent;
 import vn.cser21.incoming.IncomingCallActivity;
 import vn.cser21.incoming.IncomingEvent;
@@ -103,6 +104,9 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private String mCM;
     private ValueCallback<Uri> mUM;
     private ValueCallback<Uri[]> mUMA;
+
+    private ValueCallback<Uri> uploadMessage;
+
     private final static int FCR = 1;
     private Result resultQrCode;
     private Result resultLocation;
@@ -488,6 +492,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         String jsonExtras = extras == null ? "{}" : gson.toJson(mapBundle(extras));
         html = html.replace("<body>", "<body><script> var ANDROID_EXTRAS =" + jsonExtras + "; document.documentElement.style.setProperty('--f7-safe-area-top', '" + getStatusBarHeight() + "px'); document.documentElement.style.setProperty('--f7-safe-area-bottom', '" + getNavigationBarHeight() + "px')</script>");
 
+        //2024/09/07
+        try{
+            String ss = app21.START_SCRIPT(null);
+            html = html + "<script>"  + ss + "</script>";
+        }catch (IOException e){}
+
+
         //DEV Remove
         wv.loadDataWithBaseURL(domain, html + "", "text/html", "utf-8", "");
         //DEV Remove
@@ -495,8 +506,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
 
-//        wv.loadUrl("https://0b75-42-113-60-107.ngrok-free.app/");
-//        wv.setVisibility(View.VISIBLE);
+        //wv.loadUrl("https://37c7-118-70-249-4.ngrok-free.app");
+        //wv.setVisibility(View.VISIBLE);
 
         //DEV Open
 
@@ -600,8 +611,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-
-
         Rect rectangle = new Rect();
         Window window = getWindow();
         window.getDecorView().getWindowVisibleDisplayFrame(rectangle);
@@ -709,6 +718,12 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 });
     }
 
+    public void getASKCamera(Result result) {
+        result.data = "";
+        result.success = true;
+        app21.App21Result(result);
+    }
+
     public void getWiFiInfo(Result result) {
         Map<String, Object> wifiInfo = WiFiManager.getWiFiInfo(getApplicationContext());
         Result rs = result.copy();
@@ -749,6 +764,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         // Dev Open
 
         wv.setWebChromeClient(new WebChromeClient() {
+
             //For Android 3.0+
             public void openFileChooser(ValueCallback<Uri> uploadMsg) {
                 mUM = uploadMsg;
@@ -832,12 +848,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
     @Override
     public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+
         if (requestCode == 202) return;
         else if (requestCode == LOCATION_PERMISSION_CODE) {
             getCurrentLocation(resultLocation);
         } else if(requestCode == WIFI_INFO_CODE){
             getWiFiInfo(resultLocation);
-        } else {
+        } else if (requestCode == 201){
             QRCodeFragment qrCodeFragment = QRCodeFragment.newInstance(new QRCodeFragment.QRCodeResult() {
                 @Override
                 public void onQRCode(String code) {
