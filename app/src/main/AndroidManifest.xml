@@ -115,7 +115,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"></action>
-
+                <action android:name="android.intent.action.ACTION_PACKAGE_FULLY_REMOVED" />
             </intent-filter>
         </receiver>
         <receiver

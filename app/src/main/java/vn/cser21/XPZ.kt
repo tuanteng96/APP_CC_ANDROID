@@ -1,7 +1,11 @@
 package vn.cser21
 
+import android.R
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Handler
+import android.os.Looper
+
 import android.util.Base64
 import net.posprinter.IConnectListener
 import net.posprinter.IDeviceConnection
@@ -9,6 +13,7 @@ import net.posprinter.POSConnect
 import net.posprinter.POSPrinter
 import net.posprinter.model.PTable
 import java.io.File
+
 
 class XPZ {
     var app21: App21? = null;
@@ -112,11 +117,20 @@ class XPZ {
             curConnect = POSConnect.createDevice(POSConnect.DEVICE_TYPE_ETHERNET)
             curConnect!!.connect(ipAddress, connectListener);
             ipConnected = ipAddress;
+
+            //check time out
+            checkTimeout()
         } catch (e: Exception) {
             response(false, e.message);
         }
     }
 
+    private  fun  checkTimeout(){
+        Handler(Looper.getMainLooper()).postDelayed({
+            reset();
+            response(false, "timeout");
+        }, 5000)
+    }
 
     private fun let(value: Int?): Int {
         var v: Int = 0;

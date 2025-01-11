@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -21,10 +22,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -95,9 +99,11 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     //Upload Var
     private float m_downX;
     private static final int STORAGE_PERMISSION_CODE = 123;
-     static final int LOCATION_PERMISSION_CODE = 231;
-     static final int WIFI_INFO_CODE = 333;
+    static final int LOCATION_PERMISSION_CODE = 231;
+    static final int WIFI_INFO_CODE = 333;
     private final static int FILECHOOSER_RESULTCODE = 1;
+    private static final int PICK_IMAGES_REQUEST = 111;
+    private static final int PICK_FILES_REQUEST = 112;
     private ValueCallback<Uri[]> mUploadMessage;
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -112,8 +118,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     private Result resultLocation;
 
     private FusedLocationProviderClient fusedLocationClient;
-
-    private int resultKeyboardHeight;
 
     // End Upload Var
 
@@ -246,6 +250,25 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         });
     }
 
+    private ImagePickerCallback imagePickerCallback;
+    public void openImagePicker(boolean allowMultiple, ImagePickerCallback callback) {
+        this.imagePickerCallback = callback;
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGES_REQUEST);
+    }
+
+    public void openFilePicker(boolean allowMultiple, ImagePickerCallback callback) {
+        this.imagePickerCallback = callback;
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple);
+        startActivityForResult(Intent.createChooser(intent, "Select Files"), PICK_IMAGES_REQUEST);
+    }
+
+
     public void wvVisibility(final boolean VISIBLE) {
 
         runOnUiThread(new Runnable() {
@@ -263,6 +286,26 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
         super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == PICK_IMAGES_REQUEST  && resultCode == RESULT_OK) {
+            List<Uri> imagePaths = new ArrayList<>();
+            if (intent.getClipData() != null) {
+                // Multiple images selected
+                int count = intent.getClipData().getItemCount();
+                for (int i = 0; i < count; i++) {
+                    Uri imageUri = intent.getClipData().getItemAt(i).getUri();
+                    imagePaths.add(imageUri);
+                }
+            } else if (intent.getData() != null) {
+                // Single image selected
+                Uri imageUri = intent.getData();
+                imagePaths.add(imageUri);
+            }
+            // Call the callback method with the selected image paths
+            if (imagePickerCallback != null) {
+                imagePickerCallback.onImagesSelected(imagePaths);
+            }
+        }
+
 
 
         //Kiểm tra sử lý bởi app21
@@ -290,6 +333,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                     }
                 }
             }
+            if(results == null) return;
             mUMA.onReceiveValue(results);
             mUMA = null;
         } else {
@@ -300,6 +344,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 mUM = null;
             }
         }
+
+
     }
 
     public String getKey(String keyName, String df) {
@@ -375,11 +421,13 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
 
         //go
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        getWindow().setStatusBarColor(ContextCompat.getColor(this, android.R.color.transparent));
+//        getWindow().setStatusBarColor(ContextCompat.getColor(this, android.R.color.transparent));
 
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
@@ -396,7 +444,6 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             //  ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, 1);
         }
 
-        setContentView(R.layout.activity_main);
 
         // Get Token Key
         FirebaseMessaging.getInstance().getToken()
@@ -506,10 +553,22 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
 
-        //wv.loadUrl("https://37c7-118-70-249-4.ngrok-free.app");
-        //wv.setVisibility(View.VISIBLE);
+//        wv.loadUrl("https://dd7b-58-187-229-159.ngrok-free.app");
+//        wv.setVisibility(View.VISIBLE);
 
         //DEV Open
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            View rootView = getWindow().getDecorView();
+            rootView.setOnApplyWindowInsetsListener((view, windowInsets) -> {
+                boolean isKeyboardVisible = windowInsets.isVisible(WindowInsets.Type.ime());
+                int keyboardHeight = windowInsets.getInsets(WindowInsets.Type.ime()).bottom;
+                if(isKeyboardVisible) {
+                    wv.evaluateJavascript("javascript:document.documentElement.style.setProperty('--f7-keyboard-height', '"+ dpToPx(keyboardHeight) +"px');", null);
+                }
+                return windowInsets;
+            });
+        }
 
         getNotificationPermission();
     }
@@ -1117,6 +1176,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         }
 
     }
+
+    public interface ImagePickerCallback { void onImagesSelected(List<Uri> imagePaths); }
 
 
 }

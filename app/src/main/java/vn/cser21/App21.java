@@ -12,8 +12,11 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -21,7 +24,9 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.app.Activity;
+import android.provider.Settings.Secure;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,10 +36,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.core.content.FileProvider;
 
+import android.provider.OpenableColumns;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
+import android.webkit.WebStorage;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -57,10 +64,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -570,11 +579,12 @@ public class App21 {
                                                 int maxh = cameraInfo.maxheight == 0 ? 1000 : cameraInfo.maxheight;
 
                                                 //f.createNewFile();
-                                                Bitmap source = fromFile(photoFile);
+                                                Bitmap source = handleImageOrientation(photoFile);
                                                 Bitmap target = ImageUtil.scaleDown(source, maxW, maxh, false);
                                                 File f = save(target, cameraInfo.pref + now() + "." + cameraInfo.ext);
                                                 rs.success = true;
                                                 rs.data = "file://" + f.getAbsolutePath();
+                                                Log.d("DSDS",rs.data.toString());
                                                 photoFile.deleteOnExit();
 
                                             } catch (Exception e) {
@@ -611,6 +621,33 @@ public class App21 {
             App21Result(rs);
         }
     }
+    private Bitmap handleImageOrientation(File photoFile) throws IOException {
+        Bitmap bitmap = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
+
+        ExifInterface exif = new ExifInterface(photoFile.getAbsolutePath());
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+        int rotation = 0;
+        switch (orientation) {
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                rotation = 90;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                rotation = 180;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                rotation = 270;
+                break;
+        }
+
+        if (rotation != 0) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(rotation);
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        }
+
+        return bitmap;
+    }
 
     void FILE(final Result result) {
         Result rs = result.copy();
@@ -620,20 +657,141 @@ public class App21 {
         App21Result(rs);
     }
 
-    void CHOOSE_IMAGES(final Result result) {
-        Result rs = result.copy();
-        rs.success = true;
-        rs.data = "";
+    public static Map<String, Object> jsonToMap(String jsonString) {
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = new JSONObject(jsonString);
+            Map<String, Object> map = new HashMap<>();
 
-        App21Result(rs);
+            Iterator<String> keys = jsonObject.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                Object value = jsonObject.get(key);
+                map.put(key, value);
+            }
+            return map;
+
+        } catch (JSONException e) {
+            Log.e("ParseJSON Error", e.getMessage());
+            return  new HashMap<>();
+        }
+
+
+    }
+
+    private File saveFilesToDocument(Uri uri) {
+        ContextWrapper cw = new ContextWrapper(mContext.getApplicationContext());
+        File directory = cw.getDir("profile", Context.MODE_PRIVATE);
+        if (!directory.exists()) {
+            directory.mkdir();
+        }
+
+        String fileName = getFileName(uri);
+        File destinationFile = new File(directory, fileName);
+
+        try {
+            copyFileFromUri(uri, destinationFile);
+            Log.d("SaveFile", "Save at: " + destinationFile.getAbsolutePath());
+        } catch (IOException e) {
+            Log.e("SaveFile", "Save Error: " + e.getMessage());
+        }
+        return destinationFile;
+    }
+    private void copyFileFromUri(Uri uri, File destinationFile) throws IOException {
+        try (InputStream inputStream = mContext.getContentResolver().openInputStream(uri);
+             FileOutputStream outputStream = new FileOutputStream(destinationFile)) {
+
+            if (inputStream == null) {
+                throw new IOException("Không thể mở InputStream từ Uri: " + uri);
+            }
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+        }
+    }
+
+    private String getFileName(Uri uri) {
+        String fileName = "unknown";
+        Cursor cursor = mContext.getContentResolver().query(uri, null, null, null, null);
+
+        if (cursor != null) {
+            int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            if (nameIndex != -1 && cursor.moveToFirst()) {
+                fileName = cursor.getString(nameIndex);
+            }
+            cursor.close();
+        }
+
+        return fileName;
+    }
+
+
+    void CHOOSE_IMAGES(final Result result) {
+        Log.d("A",result.params);
+        Result rs = result.copy();
+        Map<String, Object> jsonData = jsonToMap(result.params);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            boolean isMultiple = (boolean) jsonData.getOrDefault("isMultiple", false);
+            MainActivity m = (MainActivity) mContext;
+            m.openImagePicker(isMultiple, new MainActivity.ImagePickerCallback() {
+                @Override
+                public void onImagesSelected(List<Uri> imagePaths) {
+                    Log.d("AAA", imagePaths.toString());
+                    ArrayList<String> listPath = new ArrayList<String>();
+                    for (int i = 0; i < imagePaths.size(); i++) {
+                        Uri img = imagePaths.get(i);
+                        File photoFile = saveFilesToDocument(img);
+                        listPath.add("file://" + photoFile.getAbsolutePath());
+                    }
+                    Log.d("PATH", listPath.toString());
+                    rs.success = true;
+                    rs.data = new JSONArray(listPath);
+                    Log.d("PATH2", rs.data.toString());
+                    App21Result(rs);
+                }
+            });
+        }else{
+            rs.success = false;
+            rs.data = "";
+            App21Result(rs);
+        }
+
+
+
     }
 
     void CHOOSE_FILES(final Result result) {
+        Log.d("A",result.params);
         Result rs = result.copy();
-        rs.success = true;
-        rs.data = "";
-
-        App21Result(rs);
+        Map<String, Object> jsonData = jsonToMap(result.params);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            boolean isMultiple = (boolean) jsonData.getOrDefault("isMultiple", false);
+            MainActivity m = (MainActivity) mContext;
+            m.openFilePicker(isMultiple, new MainActivity.ImagePickerCallback() {
+                @Override
+                public void onImagesSelected(List<Uri> imagePaths) {
+                    Log.d("AAA", imagePaths.toString());
+                    ArrayList<String> listPath = new ArrayList<String>();
+                    for (int i = 0; i < imagePaths.size(); i++) {
+                        Uri img = imagePaths.get(i);
+                        File photoFile = saveFilesToDocument(img);
+                        listPath.add("file://" + photoFile.getAbsolutePath());
+                    }
+                    Log.d("PATH", listPath.toString());
+                    rs.success = true;
+                    rs.data = new JSONArray(listPath);
+                    Log.d("PATH2", rs.data.toString());
+                    App21Result(rs);
+                }
+            });
+        }else{
+            rs.success = false;
+            rs.data = "";
+            App21Result(rs);
+        }
     }
 
     void DELETE_FILE(final Result result) {
@@ -1049,6 +1207,8 @@ public class App21 {
     }
 
     void GET_INFO(final Result result) {
+        String SECUREID = Secure.getString(mContext.getContentResolver(),
+                Secure.ANDROID_ID);
         final App21 t = this;
         result.success = true;
         String info = "Android";
@@ -1058,6 +1218,7 @@ public class App21 {
         info += ",MANUFACTURER:" + Build.MANUFACTURER;
         info += ",PRODUCT:" + Build.PRODUCT;
         info += ",MODEL:" + Build.MODEL;
+        info += ",SECUREID:" + SECUREID;
         result.data = info;
         App21Result(result);
     }
@@ -1253,6 +1414,13 @@ public class App21 {
 
             App21Result(result);
         }
+    }
+
+    void  LOCALSTORAGE_CLEAR(final Result result){
+        WebStorage.getInstance().deleteAllData();
+        result.success = true;
+        App21Result(result);
+
     }
 
     void  XPRINT_CLEAR(final Result result){
