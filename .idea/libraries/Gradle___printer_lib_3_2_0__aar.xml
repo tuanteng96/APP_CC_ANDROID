@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="Gradle: :printer-lib-3.2.0:@aar">
     <CLASSES>
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d347608266827b33ed4249e4c60355a6/jetified-printer-lib-3.2.0/AndroidManifest.xml" />
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d347608266827b33ed4249e4c60355a6/jetified-printer-lib-3.2.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/a1fcd9c05f6d79585c26fc66b386ab91/transformed/jetified-printer-lib-3.2.0/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/a1fcd9c05f6d79585c26fc66b386ab91/transformed/jetified-printer-lib-3.2.0/jars/classes.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
