@@ -13,7 +13,6 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
-                <arg>$MODULE_DIR$/../../../app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/prodDebug/R.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/e5767179bb6ab02e0ef8f4ec4ef82691/transformed/material-1.5.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/fd4ee389c51494afe66d7f7bf3626991/transformed/constraintlayout-2.0.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/155c99c32bc62184a15d203c4052015f/transformed/jetified-easypermissions-3.0.0-api.jar</arg>

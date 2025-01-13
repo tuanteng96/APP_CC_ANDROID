@@ -13,7 +13,6 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
-                <arg>$MODULE_DIR$/../../../app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/prodDebug/R.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/e5767179bb6ab02e0ef8f4ec4ef82691/transformed/material-1.5.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/fd4ee389c51494afe66d7f7bf3626991/transformed/constraintlayout-2.0.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/155c99c32bc62184a15d203c4052015f/transformed/jetified-easypermissions-3.0.0-api.jar</arg>
@@ -150,6 +149,7 @@
     <content url="file://$MODULE_DIR$/../../../app/build/generated/ap_generated_sources/prodDebug/out">
       <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/ap_generated_sources/prodDebug/out" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/ap_generated_sources/prodDebug/out" isTestSource="false" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/ap_generated_sources/prodDebug/out" isTestSource="false" generated="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../../app/build/generated/renderscript_source_output_dir/prodDebug/out" />
     <content url="file://$MODULE_DIR$/../../../app/build/generated/res/resValues/prod/debug">
@@ -157,6 +157,7 @@
     </content>
     <content url="file://$MODULE_DIR$/../../../app/build/generated/res/rs/prod/debug" />
     <content url="file://$MODULE_DIR$/../../../app/build/generated/source/buildConfig/prod/debug">
+      <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/source/buildConfig/prod/debug" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/source/buildConfig/prod/debug" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/source/buildConfig/prod/debug" isTestSource="false" generated="true" />
     </content>
