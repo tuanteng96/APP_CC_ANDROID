@@ -127,8 +127,13 @@ class XPZ {
 
     private  fun  checkTimeout(){
         Handler(Looper.getMainLooper()).postDelayed({
-            reset();
-            response(false, "timeout");
+
+            if(connectStatus != 200)
+            {
+                reset();
+                response(false, "timeout");
+            }
+
         }, 5000)
     }
 
