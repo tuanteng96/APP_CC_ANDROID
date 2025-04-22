@@ -293,6 +293,28 @@ public class App21 {
         m.changeStatusBarColor(rs.params);
     }
 
+    void SHARE_SOCIAL(final Result result) {
+        Result rs = result.copy();
+        rs.success = false;
+        Log.e("Param", rs.params);
+        try {
+            JSONObject jsonObject = new JSONObject(rs.params);
+            JSONArray jsonArray =  jsonObject.getJSONArray("Images");
+            List<String> images =new ArrayList<>();
+            for (int i = 0; i < jsonArray.length(); i++) {
+                String value = jsonArray.getString(i);
+                images.add(value);
+            }
+            String text = jsonObject.getString("Content");
+            Log.e("Images", images.toString());
+            MainActivity m = (MainActivity) mContext;
+            m.shareImages(images, text);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        App21Result(rs);
+    }
+
     void NAVIGATION_COLOR(final Result result) {
         Result rs = result.copy();
         rs.success = true;

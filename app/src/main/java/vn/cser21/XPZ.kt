@@ -33,7 +33,8 @@ class XPZ {
     private var printParam: XPZParam? = null;
 
     private var resourse: List<String?> = ArrayList()
-
+    private  var printed: Boolean = false;
+    private  var disconnectN: Int = 0;
     private fun reset() {
         printer = null;
         curConnect = null;
@@ -66,6 +67,7 @@ class XPZ {
                     response(true, "CONNECT_SUCCESS:${msg}");
                 }
             }
+
 
             POSConnect.CONNECT_FAIL -> {
 //                UIUtils.toast(R.string.con_failed)
@@ -128,7 +130,7 @@ class XPZ {
     private  fun  checkTimeout(){
         Handler(Looper.getMainLooper()).postDelayed({
 
-            if(connectStatus != 200)
+            if(connectStatus != 200 && !printed)
             {
                 reset();
                 response(false, "timeout");
@@ -136,6 +138,9 @@ class XPZ {
 
         }, 5000)
     }
+
+
+
 
     private fun let(value: Int?): Int {
         var v: Int = 0;
@@ -270,14 +275,22 @@ class XPZ {
         } catch (e: Exception) {
             response(false, e.message);
         }
-
+        if(printParam != null && printParam?.keepAlive != true)
+        {
+            disconnectN += 1;
+            disconnect();
+        }
+        printed = true;
 
     }
+
 
 
     public fun printParam(ipAddress: String, param: XPZParam?) {
         try {
             this.printParam = param;
+            this.disconnectN = 0;
+            this.printed = false;
             if (connectStatus == 200 && ipAddress == ipConnected) {
                 doPrint();
             } else {
@@ -286,6 +299,25 @@ class XPZ {
         } catch (e: Exception) {
             response(false, e.message);
         }
+    }
+
+    public  fun disconnect(){
+
+
+        Handler(Looper.getMainLooper()).postDelayed({
+
+            clear();
+            if(connectStatus ==200 && disconnectN> 0)
+            {
+                try {
+                    curConnect?.close()
+                }catch (e: Exception){
+
+                }
+            }
+            reset();
+
+        }, 5000)
     }
 
     public  fun clear(){
@@ -374,6 +406,7 @@ class XPZParam {
     var feedLine: Boolean = true;
     var cutHalfAndFeed: Int = 1;
     var cutPaper: Boolean = true;
+    var keepAlive: Boolean = false;
 }
 
 class XPZTable {
