@@ -561,7 +561,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         //DEV Open
         // Android phải chạy qua Ngrok, Không thể chạy qua Local
 
-//        wv.loadUrl("https://dd7b-58-187-229-159.ngrok-free.app");
+//        wv.loadUrl("https://96cc-183-80-135-20.ngrok-free.app/");
 //        wv.setVisibility(View.VISIBLE);
 
         //DEV Open
