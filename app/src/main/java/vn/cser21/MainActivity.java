@@ -1234,11 +1234,25 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
             }
         }
         Log.e("FILES: ", uris.toString());
+        Intent shareIntent;
+        if (text != null && !text.trim().isEmpty()) {
+            // Có text → chỉ gửi 1 ảnh + text
+            shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("image/*");
+            if(!uris.isEmpty()){
+                Uri firstImageUri = uris.get(0);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, firstImageUri);
+            }
+            shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } else {
+            // Không có text → gửi nhiều ảnh
+            shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            shareIntent.setType("image/*");
+            shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
 
-        Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
-        shareIntent.setType("image/*");
-        shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         this.startActivity(Intent.createChooser(shareIntent, "Share"));
         callback.onSuccess();
     }
