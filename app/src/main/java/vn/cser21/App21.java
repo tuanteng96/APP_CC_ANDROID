@@ -44,6 +44,7 @@ import android.util.Log;
 import android.webkit.WebStorage;
 import android.widget.Toast;
 
+import com.google.firebase.encoders.json.BuildConfig;
 import com.google.gson.Gson;
 import com.permissionx.guolindev.PermissionX;
 import com.permissionx.guolindev.callback.RequestCallback;
