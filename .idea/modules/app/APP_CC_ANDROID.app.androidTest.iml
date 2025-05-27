@@ -49,7 +49,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/ap_generated_sources/prodDebugAndroidTest/out" isTestSource="true" generated="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../../app/build/generated/res/resValues/androidTest/prod/debug">
-      <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/res/resValues/androidTest/prod/debug" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../app/build/generated/res/resValues/androidTest/prod/debug" type="java-test-resource" generated="true" />
     </content>
     <content url="file://$MODULE_DIR$/../../../app/src/androidTest">
       <sourceFolder url="file://$MODULE_DIR$/../../../app/src/androidTest/java" isTestSource="true" />
