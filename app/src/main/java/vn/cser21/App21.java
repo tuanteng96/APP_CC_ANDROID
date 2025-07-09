@@ -565,14 +565,13 @@ public class App21 {
                                 _photoFile = createImageFile("." + cameraInfo.ext);
                             } catch (IOException ex) {
                                 // Error occurred while creating the File
-
                             }
                             final File photoFile = _photoFile;
                             if (photoFile != null) {
                                 try {
 
                                     Uri photoURI = FileProvider.getUriForFile(mContext,
-                                            BuildConfig.APPLICATION_ID + ".provider",
+                                            mContext.getPackageName() + ".provider",
                                             photoFile);
                                     //mPhotoFile = photoFile;
                                     cInt.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
@@ -589,15 +588,7 @@ public class App21 {
                                     if (this.resultCode == Activity.RESULT_OK) {
                                         Result rs = result.copy();
                                         try {
-                                            // Bitmap bp = (Bitmap) this.intent.getExtras().get("data");
-
-                                            //imgCapture.setImageBitmap(bp);
-
-
-                                            // File f = newFile(pref + now() + "." + ext);
                                             try {
-                                                //copy(photoFile, f);
-
                                                 int maxW = cameraInfo.maxwidth == 0 ? 1000 : cameraInfo.maxwidth;
                                                 int maxh = cameraInfo.maxheight == 0 ? 1000 : cameraInfo.maxheight;
 
@@ -611,15 +602,14 @@ public class App21 {
                                                 photoFile.deleteOnExit();
 
                                             } catch (Exception e) {
-                                                rs.error = e.getLocalizedMessage();
+                                                rs.error = "resultCode3=" + e.getLocalizedMessage();
                                                 rs.success = false;
                                             }
-                                            // File f = save(bp, pref + now() + "." + ext);
 
                                             App21Result(rs);
                                         } catch (NullPointerException n) {
                                             rs.success = false;
-                                            rs.error = n.getLocalizedMessage();
+                                            rs.error = "resultCode2=" + n.getLocalizedMessage();
                                         }
                                     } else if (resultCode == Activity.RESULT_CANCELED) {
                                         Result rs = result.copy();
