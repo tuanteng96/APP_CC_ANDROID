@@ -662,6 +662,20 @@ public class App21 {
         return bitmap;
     }
 
+    private File saveBitmapToFile(Bitmap bitmap, File originalFile) throws IOException {
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(originalFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+        return originalFile;
+    }
+
+
     void FILE(final Result result) {
         Result rs = result.copy();
         rs.success = true;
@@ -751,13 +765,19 @@ public class App21 {
             MainActivity m = (MainActivity) mContext;
             m.openImagePicker(isMultiple, new MainActivity.ImagePickerCallback() {
                 @Override
+
                 public void onImagesSelected(List<Uri> imagePaths) {
                     Log.d("AAA", imagePaths.toString());
                     ArrayList<String> listPath = new ArrayList<String>();
-                    for (int i = 0; i < imagePaths.size(); i++) {
-                        Uri img = imagePaths.get(i);
-                        File photoFile = saveFilesToDocument(img);
-                        listPath.add("file://" + photoFile.getAbsolutePath());
+                    for (Uri imgUri : imagePaths) {
+                        try {
+                            File originalFile = saveFilesToDocument(imgUri);
+                            Bitmap rotatedBitmap = handleImageOrientation(originalFile);
+                            File fixedFile = saveBitmapToFile(rotatedBitmap, originalFile);
+                            listPath.add("file://" + fixedFile.getAbsolutePath());
+                        } catch (IOException e) {
+                            Log.e("IMAGE_PROCESS", "Error processing image: " + imgUri, e);
+                        }
                     }
                     Log.d("PATH", listPath.toString());
                     rs.success = true;
@@ -771,10 +791,8 @@ public class App21 {
             rs.data = "";
             App21Result(rs);
         }
-
-
-
     }
+
 
     void CHOOSE_FILES(final Result result) {
         Log.d("A",result.params);
